@@ -43,14 +43,12 @@ void TrafficLight::waitForGreen()
     // FP.5b : add the implementation of the method waitForGreen, in which an infinite while-loop 
     // runs and repeatedly calls the receive function on the message queue. 
     // Once it receives TrafficLightPhase::green, the method returns.
-
     while(true)
     {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
         TrafficLightPhase phase = _messageQueue.receive();
         if(phase == TrafficLightPhase::green)
             return;
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 }
 
@@ -62,6 +60,7 @@ TrafficLightPhase TrafficLight::getCurrentPhase()
 void TrafficLight::simulate()
 {
     // FP.2b : Finally, the private method „cycleThroughPhases“ should be started in a thread when the public method „simulate“ is called. To do this, use the thread queue in the base class. 
+    
     TrafficObject::threads.emplace_back(std::thread(&TrafficLight::cycleThroughPhases, this));
 
 }
@@ -75,20 +74,20 @@ void TrafficLight::cycleThroughPhases()
     // Also, the while-loop should use std::this_thread::sleep_for to wait 1ms between two cycles.
 
     auto prevUpdate = std::chrono::steady_clock::now();
-    int cycleDuration = rand() % 3 + 4;
+    int cycleDuration = rand() % (10 - 6) + 3;
 
     while (true)
     {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
         auto currUpdate = std::chrono::steady_clock::now();
         auto update = std::chrono::duration_cast<std::chrono::seconds>( currUpdate - prevUpdate);
         if(update.count() >= cycleDuration)
         {
             _currentPhase = (getCurrentPhase() == TrafficLightPhase::red ? TrafficLightPhase::green : TrafficLightPhase::red);
+
             _messageQueue.send(std::move(_currentPhase));
             prevUpdate = currUpdate;
         }
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
-    
 }
